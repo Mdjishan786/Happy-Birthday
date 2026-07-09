@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A Letter For You</title>
+
+    <!-- EmailJS SDK for sending emails with attachments -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Dancing+Script:wght@500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --paper: #f6eee0;
+            --paper-deep: #ecdec2;
+            --paper-line: rgba(122, 44, 59, 0.14);
+            --ink: #3a2a22;
+            --ink-soft: rgba(58, 42, 34, 0.62);
+            --ink-faint: rgba(58, 42, 34, 0.4);
+            --wine: #7c2c3b;
+            --wine-deep: #551f2a;
+            --gold: #ad8749;
+            --gold-light: #dcc192;
+            --sage: #74815f;
+            --error: #a23434;
+
+            --font-display: 'Cormorant Garamond', serif;
+            --font-script: 'Dancing Script', cursive;
+            --font-body: 'Lora', serif;
+
+            --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--paper);
+            color: var(--ink);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible {
+            outline: 1px solid var(--wine);
+            outline-offset: 4px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--paper-deep);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--gold);
+            border-radius: 10px;
+        }
+
+        #ember-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        #petal-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* ===================== LANDING ===================== */
+        #landing {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(ellipse 70% 60% at 50% 30%, rgba(255, 250, 240, 0.5), transparent 70%),
+                var(--paper);
+            transition: opacity 0.9s var(--ease-soft), transform 0.9s var(--ease-soft);
+        }
+        #landing[data-hidden='true'] {
+            opacity: 0;
+            transform: scale(1.03);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            font-family: var(--font-body);
+            font-size: 0.72rem;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: var(--ink-faint);
+            margin-bottom: 22px;
+        }
+
+        .landing-title {
+            font-family: var(--font-display);
+            font-style: italic;
+            font-weight: 600;
+            font-size: clamp(2.1rem, 6vw, 3.4rem);
+            color: var(--wine-deep);
+            text-align: center;
+            margin-bottom: 44px;
+            padding: 0 20px;
+        }
+
+        /* Wax seal button */
+        .seal-wrapper {
+            position: relative;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 128px;
+            height: 128px;
+            animation: sealBreathe 4.5s ease-in-out infinite;
+        }
+        @keyframes sealBreathe {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.035);
+            }
+        }
+        .seal-wrapper svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .seal-crack {
+            stroke: rgba(58, 42, 34, 0.55);
+            stroke-width: 1.4;
+            fill: none;
+            stroke-dasharray: 60;
+            stroke-dashoffset: 60;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        .seal-wrapper[data-cracked='true'] .seal-crack {
+            stroke-dashoffset: 0;
+        }
+        .seal-half {
+            transition: transform 0.7s var(--ease-soft), opacity 0.7s ease;
+            transform-origin: 50% 50%;
+        }
+        .seal-wrapper[data-cracked='true'] .seal-half-left {
+            transform: translate(-14px, 2px) rotate(-8deg);
+            opacity: 0;
+        }
+        .seal-wrapper[data-cracked='true'] .seal-half-right {
+            transform: translate(14px, 2px) rotate(8deg);
+            opacity: 0;
+        }
+
+        .gift-hint {
+            margin-top: 24px;
+            font-size: 0.85rem;
+            font-style: italic;
+            color: var(--ink-faint);
+            letter-spacing: 0.02em;
+        }
+
+        /* ===================== PASSWORD NOTE ===================== */
+        #password-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(58, 42, 34, 0.28);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #password-overlay[data-active='true'] {
+            display: flex;
+            animation: fadeInOverlay 0.35s ease;
+        }
+        @keyframes fadeInOverlay {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .note-card {
+            position: relative;
+            background: var(--paper);
+            border-radius: 3px;
+            padding: 38px 34px 32px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(58, 42, 34, 0.3);
+            animation: notePop 0.45s var(--ease-soft);
+        }
+        @keyframes notePop {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .note-card::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            width: 56px;
+            height: 20px;
+            background: rgba(220, 193, 146, 0.55);
+        }
+
+        .note-card h2 {
+            font-family: var(--font-display);
+            font-style: italic;
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: var(--wine-deep);
+            margin-bottom: 6px;
+        }
+        .note-card p.hint {
+            color: var(--ink-soft);
+            font-size: 0.88rem;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        #passwordInput {
+            width: 100%;
+            padding: 10px 4px;
+            border: none;
+            border-bottom: 1px solid var(--paper-line);
+            background: transparent;
+            color: var(--ink);
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            text-align: center;
+            outline: none;
+            letter-spacing: 0.12em;
+            margin-bottom: 24px;
+            transition: border-color 0.3s ease;
+        }
+        #passwordInput:focus {
+            border-color: var(--wine);
+        }
+        #passwordInput::placeholder {
+            color: var(--ink-faint);
+            letter-spacing: 0.05em;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn-group button {
+            font-family: var(--font-body);
+            padding: 10px 26px;
+            border-radius: 2px;
+            font-size: 0.88rem;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .btn-unlock {
+            background: var(--wine);
+            color: var(--paper);
+            border: 1px solid var(--wine);
+        }
+        .btn-unlock:hover {
+            background: var(--wine-deep);
+            border-color: var(--wine-deep);
+        }
+        .btn-cancel {
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px solid var(--paper-line);
+        }
+        .btn-cancel:hover {
+            border-color: var(--ink-faint);
+            color: var(--ink);
+        }
+
+        .password-error {
+            color: var(--error);
+            font-size: 0.82rem;
+            margin-top: 14px;
+            min-height: 1.4em;
+            font-style: italic;
+        }
+        .password-error[data-shake='true'] {
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-7px);
+            }
+            50% {
+                transform: translateX(7px);
+            }
+            75% {
+                transform: translateX(-4px);
+            }
+        }
+
+        /* ===================== LETTER PAGE ===================== */
+        #wish-page {
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            padding: 56px 20px 30px;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+        }
+        #wish-page[data-visible='true'] {
+            display: block;
+            opacity: 1;
+        }
+
+        .letter-card {
+            position: relative;
+            background: var(--paper);
+            border: 1px solid var(--paper-line);
+            box-shadow: 0 20px 50px rgba(58, 42, 34, 0.16);
+            padding: 56px 48px 48px;
+            margin-bottom: 40px;
+            animation: fadeUp 1s var(--ease-soft) both;
+        }
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flourish {
+            position: absolute;
+            width: 54px;
+            height: 54px;
+            color: var(--gold);
+            opacity: 0.85;
+        }
+        .flourish.tl {
+            top: 16px;
+            left: 16px;
+        }
+        .flourish.br {
+            bottom: 16px;
+            right: 16px;
+            transform: rotate(180deg);
+        }
+
+        .letter-eyebrow {
+            text-align: center;
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--sage);
+            margin-bottom: 14px;
+        }
+
+        .wish-title {
+            font-family: var(--font-display);
+            font-style: italic;
+            font-weight: 600;
+            font-size: clamp(1.9rem, 5vw, 2.7rem);
+            color: var(--wine-deep);
+            text-align: center;
+        }
+
+        .wish-name {
+            font-family: var(--font-script);
+            font-weight: 700;
+            font-size: clamp(2.4rem, 8vw, 3.6rem);
+            color: var(--wine);
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .letter-divider {
+            width: 64px;
+            height: 1px;
+            background: var(--gold);
+            margin: 26px auto;
+        }
+
+        .wish-message {
+            font-size: clamp(1rem, 2vw, 1.12rem);
+            color: var(--ink-soft);
+            text-align: left;
+            line-height: 1.95;
+            font-style: italic;
+            max-width: 540px;
+            margin: 0 auto;
+        }
+        .wish-message .drop-cap {
+            float: left;
+            font-family: var(--font-display);
+            font-style: normal;
+            font-weight: 700;
+            font-size: 3.4rem;
+            line-height: 0.8;
+            color: var(--wine);
+            padding: 6px 8px 0 0;
+        }
+        .type-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: var(--wine);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 0.9s step-end infinite;
+        }
+        .type-cursor[data-hidden='true'] {
+            display: none;
+        }
+        @keyframes blink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .signoff {
+            text-align: right;
+            font-family: var(--font-script);
+            font-size: 1.6rem;
+            color: var(--wine);
+            margin-top: 28px;
+        }
+
+        /* ===================== PANELS ===================== */
+        .panel {
+            background: transparent;
+            padding: 8px 8px 44px;
+            margin-bottom: 8px;
+        }
+        .panel h3 {
+            font-family: var(--font-display);
+            font-style: italic;
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: var(--wine-deep);
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        /* Polaroid photo */
+        .polaroid {
+            background: #fffdf8;
+            border: 1px solid rgba(58, 42, 34, 0.08);
+            padding: 14px 14px 46px;
+            max-width: 360px;
+            margin: 0 auto;
+            box-shadow: 0 16px 34px rgba(58, 42, 34, 0.18);
+            transform: rotate(-2.5deg);
+            transition: transform 0.4s ease;
+            cursor: pointer;
+            display: block;
+        }
+        .polaroid:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+        .polaroid img {
+            width: 100%;
+            display: block;
+            aspect-ratio: 4 / 4;
+            object-fit: cover;
+            filter: sepia(0.08) saturate(1.05);
+        }
+        .polaroid-caption {
+            text-align: center;
+            font-family: var(--font-script);
+            font-size: 1.1rem;
+            color: var(--wine);
+            margin-top: 10px;
+        }
+
+        #photo-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(20, 12, 10, 0.86);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            cursor: pointer;
+        }
+        #photo-modal[data-active='true'] {
+            display: flex;
+            animation: fadeInOverlay 0.35s ease;
+        }
+        #photo-modal img {
+            max-width: 90%;
+            max-height: 85vh;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            border: 6px solid #fffdf8;
+            object-fit: contain;
+        }
+        .close-modal {
+            position: absolute;
+            top: 26px;
+            right: 34px;
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-body);
+        }
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        /* ====== SEND MESSAGE PANEL with Image ====== */
+        .send-form {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .send-form input,
+        .send-form textarea {
+            width: 100%;
+            padding: 10px 4px;
+            border: none;
+            border-bottom: 1px solid var(--paper-line);
+            background: transparent;
+            color: var(--ink);
+            font-family: var(--font-body);
+            font-style: italic;
+            font-size: 0.98rem;
+            outline: none;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+        }
+        .send-form input:focus,
+        .send-form textarea:focus {
+            border-color: var(--wine);
+        }
+        .send-form input::placeholder,
+        .send-form textarea::placeholder {
+            color: var(--ink-faint);
+            font-style: italic;
+        }
+        .send-form textarea {
+            min-height: 84px;
+        }
+
+        /* Image upload */
+        .image-upload-area {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .image-upload-area label.file-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--ink-soft);
+            cursor: pointer;
+            padding: 8px 16px;
+            border: 1px dashed var(--gold);
+            border-radius: 2px;
+            transition: background 0.2s;
+            align-self: flex-start;
+            font-style: italic;
+        }
+        .image-upload-area label.file-label:hover {
+            background: rgba(173, 135, 73, 0.06);
+        }
+        .image-upload-area input[type="file"] {
+            display: none;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 160px;
+            object-fit: contain;
+            border: 1px solid var(--paper-line);
+            border-radius: 2px;
+            background: #fffdf8;
+            padding: 6px;
+            display: none;
+        }
+        .image-preview[data-visible="true"] {
+            display: block;
+        }
+        .remove-image-btn {
+            background: none;
+            border: none;
+            color: var(--error);
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-style: italic;
+            padding: 4px 0;
+            align-self: flex-start;
+        }
+        .remove-image-btn:hover {
+            text-decoration: underline;
+        }
+
+        .send-actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .send-actions button {
+            font-family: var(--font-body);
+            padding: 12px 28px;
+            border-radius: 2px;
+            font-size: 0.88rem;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid transparent;
+        }
+        .send-email-btn {
+            background: var(--wine);
+            color: var(--paper);
+            border-color: var(--wine);
+        }
+        .send-email-btn:hover {
+            background: var(--wine-deep);
+            border-color: var(--wine-deep);
+        }
+        .send-wa-btn {
+            background: #25D366;
+            color: #fff;
+            border-color: #25D366;
+        }
+        .send-wa-btn:hover {
+            background: #1da851;
+            border-color: #1da851;
+        }
+        .send-actions .btn-clear-send {
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px solid var(--paper-line);
+        }
+        .send-actions .btn-clear-send:hover {
+            border-color: var(--ink-faint);
+            color: var(--ink);
+        }
+
+        .send-feedback {
+            text-align: center;
+            padding: 16px 0 4px;
+            color: var(--sage);
+            font-style: italic;
+            font-size: 0.98rem;
+            min-height: 2.6em;
+        }
+        .send-feedback.error {
+            color: var(--error);
+        }
+        .send-feedback .small-note {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--ink-faint);
+            margin-top: 4px;
+        }
+
+        /* Contact */
+        .contact-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 22px;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+        .contact-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--ink-soft);
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+        .contact-seal {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 1.5px solid var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--wine);
+            font-size: 1.2rem;
+            font-family: var(--font-display);
+            transition: all 0.25s ease;
+            background: var(--paper);
+        }
+        .contact-card:hover .contact-seal {
+            background: var(--wine);
+            color: var(--paper);
+            border-color: var(--wine);
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 34px 20px 20px;
+            animation: fadeUp 1s ease both;
+            animation-delay: 0.5s;
+        }
+        .footer p {
+            color: var(--ink-faint);
+            font-size: 0.76rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 5px;
+        }
+        .footer .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 14px;
+        }
+        .footer .social-icons a {
+            color: var(--ink-faint);
+            font-size: 1.05rem;
+            font-family: var(--font-display);
+            transition: color 0.25s ease;
+        }
+        .footer .social-icons a:hover {
+            color: var(--wine);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 640px) {
+            .letter-card {
+                padding: 40px 26px 34px;
+            }
+            .flourish {
+                width: 38px;
+                height: 38px;
+            }
+            .note-card {
+                padding: 30px 24px 26px;
+            }
+            .polaroid {
+                max-width: 280px;
+            }
+            .send-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            .send-actions button {
+                width: 100%;
+                justify-content: center;
+            }
+            .image-upload-area label.file-label {
+                align-self: stretch;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="ember-canvas" aria-hidden="true"></canvas>
+    <canvas id="petal-canvas" aria-hidden="true"></canvas>
+
+    <section id="landing" aria-label="Unlock screen">
+        <p class="eyebrow">A keepsake, sealed just for you</p>
+        <h1 class="landing-title">Happy Birthday</h1>
+
+        <button class="seal-wrapper" id="sealButton" type="button" aria-haspopup="dialog" aria-label="Break the seal to open your letter">
+            <svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+                <g class="seal-half seal-half-left">
+                    <path d="M64 8 A56 56 0 0 0 8 64 A56 56 0 0 0 30 108 L64 64 Z" fill="#8a3242"></path>
+                </g>
+                <g class="seal-half seal-half-right">
+                    <path d="M64 8 A56 56 0 0 1 120 64 A56 56 0 0 1 98 108 L64 64 Z" fill="#7c2c3b"></path>
+                </g>
+                <circle cx="64" cy="64" r="56" fill="none" stroke="#5a1f2a" stroke-width="1.5" opacity="0.4"></circle>
+                <text x="64" y="76" text-anchor="middle" font-family="Dancing Script, cursive" font-size="46" fill="#e9d3ae">J</text>
+                <path class="seal-crack" d="M64 20 L58 46 L70 60 L60 78 L64 108" />
+            </svg>
+        </button>
+        <p class="gift-hint">press the seal to open</p>
+    </section>
+
+    <div id="password-overlay" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
+        <div class="note-card">
+            <h2 id="passwordTitle">Whisper the word</h2>
+            <p class="hint">A little secret keeps the letter safe</p>
+            <label for="passwordInput" class="sr-only">Password</label>
+            <input type="password" id="passwordInput" placeholder="· · · ·" autocomplete="off" />
+            <div class="btn-group">
+                <button class="btn-unlock" id="unlockBtn" type="button">Open</button>
+                <button class="btn-cancel" id="cancelBtn" type="button">Not yet</button>
+            </div>
+            <div class="password-error" id="passwordError" role="alert" aria-live="assertive"></div>
+        </div>
+    </div>
+
+    <main id="wish-page">
+        <article class="letter-card">
+            <svg class="flourish tl" viewBox="0 0 60 60" aria-hidden="true"><path d="M6 54 C6 30 20 14 44 8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="44" cy="8" r="2.4" fill="currentColor"/><circle cx="24" cy="20" r="1.6" fill="currentColor"/></svg>
+            <svg class="flourish br" viewBox="0 0 60 60" aria-hidden="true"><path d="M6 54 C6 30 20 14 44 8" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="44" cy="8" r="2.4" fill="currentColor"/><circle cx="24" cy="20" r="1.6" fill="currentColor"/></svg>
+
+            <p class="letter-eyebrow">To a very dear person</p>
+            <h1 class="wish-title">Happy Birthday</h1>
+            <h2 class="wish-name" id="wishNameDisplay"></h2>
+            <div class="letter-divider" aria-hidden="true"></div>
+            <p class="wish-message" id="wishMessageDisplay">
+                <span id="typedMessage"></span><span class="type-cursor" id="typeCursor" data-hidden="true"></span>
+            </p>
+            <p class="signoff" id="signoff"></p>
+        </article>
+
+        <section class="panel" aria-labelledby="photoHeading">
+            <h3 id="photoHeading">A memory to keep</h3>
+            <button class="polaroid" id="photoWrapper" type="button" aria-label="View photo full screen">
+                <img id="birthdayPhoto" src="" alt="" />
+                <span class="polaroid-caption">forever a favourite</span>
+            </button>
+        </section>
+
+        <!-- ===== SEND MESSAGE with IMAGE ===== -->
+        <section class="panel" aria-labelledby="sendHeading">
+            <h3 id="sendHeading">Send a message with an image</h3>
+            <form class="send-form" id="sendForm" novalidate>
+                <label for="sendName" class="sr-only">Your name</label>
+                <input type="text" id="sendName" placeholder="Your name" maxlength="60" required />
+
+                <label for="sendMessage" class="sr-only">Your message</label>
+                <textarea id="sendMessage" placeholder="Write your message here..." maxlength="600" required></textarea>
+
+                <!-- Image upload -->
+                <div class="image-upload-area">
+                    <label for="imageInput" class="file-label">🖼️ Choose an image (optional)</label>
+                    <input type="file" id="imageInput" accept="image/*" />
+                    <img id="imagePreview" class="image-preview" alt="Image preview" />
+                    <button type="button" id="removeImageBtn" class="remove-image-btn" style="display:none;">✕ Remove image</button>
+                </div>
+
+                <div class="send-actions">
+                    <button class="send-email-btn" id="sendEmailBtn" type="button">✉️ Send via Email</button>
+                    <button class="send-wa-btn" id="sendWaBtn" type="button">💬 Send via WhatsApp</button>
+                    <button class="btn-clear-send" id="sendClearBtn" type="button">Clear</button>
+                </div>
+                <div class="send-feedback" id="sendFeedback" role="status" aria-live="polite"></div>
+            </form>
+        </section>
+
+        <section class="panel" aria-labelledby="contactHeading">
+            <h3 id="contactHeading">Reach me</h3>
+            <div class="contact-grid" id="contactGrid"></div>
+        </section>
+
+        <footer class="footer">
+            <p>Made with care, for your birthday</p>
+            <p>Developed by <span id="devName"></span> &middot; <span id="footerCopy"></span></p>
+            <div class="social-icons" id="socialIcons"></div>
+        </footer>
+    </main>
+
+    <div id="photo-modal" role="dialog" aria-modal="true" aria-label="Photo preview">
+        <button class="close-modal" id="photoModalClose" type="button" aria-label="Close photo preview">&times;</button>
+        <img id="modalPhotoImg" src="" alt="" />
+    </div>
+
+    <script>
+        (() => {
+            'use strict';
+
+            const CONFIG = Object.freeze({
+                password: '1234',
+                birthdayName: 'Md Jishan',
+                birthdayMessage: 'Wishing you happiness, success, good health, and endless smiles. May every dream come true. Have a wonderful birthday.',
+                signoff: 'with love',
+                photoUrl: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&h=800&fit=crop&crop=center&auto=format',
+                contact: {
+                    whatsapp: '919304940805',
+                    email: 'mdjishancse@gmail.com',
+                    phone: '+91 9304940805',
+                },
+                developer: 'Md Jishan',
+                social: {
+                    github: 'https://github.com/Mdjishan786/mdjishan.github.io/actions',
+                    linkedin: 'https://www.linkedin.com/feed/',
+                    instagram: 'https://www.instagram.com/jishan_2k_7?igsh=MW5jMzNtaXg0Z3VueQ==',
+                    email: 'mailto:mdjishancse@gmail.com',
+                },
+                // EmailJS configuration – replace with your own keys
+                emailjs: {
+                    publicKey: 'YOUR_EMAILJS_PUBLIC_KEY',
+                    serviceID: 'YOUR_EMAILJS_SERVICE_ID',
+                    templateID: 'YOUR_EMAILJS_TEMPLATE_ID',
+                }
+            });
+
+            const dom = {
+                landing: document.getElementById('landing'),
+                sealButton: document.getElementById('sealButton'),
+                passwordOverlay: document.getElementById('password-overlay'),
+                passwordInput: document.getElementById('passwordInput'),
+                unlockBtn: document.getElementById('unlockBtn'),
+                cancelBtn: document.getElementById('cancelBtn'),
+                passwordError: document.getElementById('passwordError'),
+                wishPage: document.getElementById('wish-page'),
+                wishNameDisplay: document.getElementById('wishNameDisplay'),
+                typedMessageEl: document.getElementById('typedMessage'),
+                typeCursor: document.getElementById('typeCursor'),
+                signoff: document.getElementById('signoff'),
+                birthdayPhoto: document.getElementById('birthdayPhoto'),
+                photoWrapper: document.getElementById('photoWrapper'),
+                photoModal: document.getElementById('photo-modal'),
+                modalPhotoImg: document.getElementById('modalPhotoImg'),
+                photoModalClose: document.getElementById('photoModalClose'),
+                // send message
+                sendForm: document.getElementById('sendForm'),
+                sendName: document.getElementById('sendName'),
+                sendMessage: document.getElementById('sendMessage'),
+                sendEmailBtn: document.getElementById('sendEmailBtn'),
+                sendWaBtn: document.getElementById('sendWaBtn'),
+                sendClearBtn: document.getElementById('sendClearBtn'),
+                sendFeedback: document.getElementById('sendFeedback'),
+                // image
+                imageInput: document.getElementById('imageInput'),
+                imagePreview: document.getElementById('imagePreview'),
+                removeImageBtn: document.getElementById('removeImageBtn'),
+                // contact
+                contactGrid: document.getElementById('contactGrid'),
+                devName: document.getElementById('devName'),
+                footerCopy: document.getElementById('footerCopy'),
+                socialIcons: document.getElementById('socialIcons'),
+            };
+
+            const state = {
+                messageTyped: false,
+                imageData: null, // base64 string
+                imageFile: null,
+            };
+
+            // ===== EmailJS init =====
+            function initEmailJS() {
+                if (CONFIG.emailjs.publicKey && CONFIG.emailjs.publicKey !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+                    emailjs.init(CONFIG.emailjs.publicKey);
+                    return true;
+                }
+                return false;
+            }
+
+            // ===== Render static =====
+            function renderStaticContent() {
+                dom.devName.textContent = CONFIG.developer;
+                dom.footerCopy.textContent = `© ${new Date().getFullYear()}`;
+                dom.wishNameDisplay.textContent = CONFIG.birthdayName;
+                dom.signoff.textContent = CONFIG.signoff;
+                dom.birthdayPhoto.src = CONFIG.photoUrl;
+                dom.birthdayPhoto.alt = `${CONFIG.birthdayName}'s birthday memory`;
+            }
+
+            function escapeForLabel(value) {
+                const div = document.createElement('div');
+                div.textContent = value;
+                return div.innerHTML;
+            }
+
+            function renderContactCards() {
+                const contacts = [
+                    { label: 'WhatsApp', href: CONFIG.contact.whatsapp ? `https://wa.me/${CONFIG.contact.whatsapp}` :
+                            null, glyph: 'W', newTab: true },
+                    { label: 'Email', href: CONFIG.contact.email ? `mailto:${CONFIG.contact.email}` : null, glyph: 'E',
+                        newTab: false },
+                    { label: CONFIG.contact.phone || 'Phone', href: CONFIG.contact.phone ?
+                            `tel:${CONFIG.contact.phone.replace(/\s+/g, '')}` : null, glyph: 'P', newTab: false },
+                ];
+
+                dom.contactGrid.innerHTML = '';
+                contacts.filter((c) => Boolean(c.href)).forEach((c) => {
+                    const link = document.createElement('a');
+                    link.className = 'contact-card';
+                    link.href = c.href;
+                    if (c.newTab) { link.target = '_blank';
+                        link.rel = 'noopener noreferrer'; }
+                    link.innerHTML =
+                        `<span class="contact-seal">${escapeForLabel(c.glyph)}</span><span>${escapeForLabel(c.label)}</span>`;
+                    dom.contactGrid.appendChild(link);
+                });
+            }
+
+            function renderSocialIcons() {
+                const labelMap = { github: 'GitHub', linkedin: 'LinkedIn', instagram: 'Instagram', email: 'Email' };
+                dom.socialIcons.innerHTML = '';
+                Object.entries(CONFIG.social).filter(([, url]) => Boolean(url)).forEach(([key, url]) => {
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    const label = labelMap[key] || key;
+                    link.title = label;
+                    link.setAttribute('aria-label', label);
+                    link.textContent = label.charAt(0);
+                    dom.socialIcons.appendChild(link);
+                });
+            }
+
+            // ===== Embers & Petals =====
+            function initEmbers() {
+                const canvas = document.getElementById('ember-canvas');
+                const ctx = canvas.getContext('2d');
+                let width, height, embers;
+
+                function resize() {
+                    width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight;
+                }
+
+                function seed(count = 40) {
+                    embers = Array.from({ length: count }, () => ({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        r: Math.random() * 1.6 + 0.5,
+                        speed: Math.random() * 0.25 + 0.08,
+                        drift: (Math.random() - 0.5) * 0.3,
+                        alpha: Math.random() * 0.4 + 0.15,
+                    }));
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, width, height);
+                    for (const e of embers) {
+                        e.y -= e.speed;
+                        e.x += Math.sin(e.y * 0.01) * e.drift * 0.4;
+                        if (e.y < -10) { e.y = height + 10;
+                            e.x = Math.random() * width; }
+                        ctx.beginPath();
+                        ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(173, 135, 73, ${e.alpha})`;
+                        ctx.fill();
+                    }
+                    requestAnimationFrame(draw);
+                }
+                resize();
+                seed();
+                draw();
+                window.addEventListener('resize', () => { resize();
+                    seed(); });
+            }
+
+            function initPetals() {
+                const canvas = document.getElementById('petal-canvas');
+                const ctx = canvas.getContext('2d');
+                let width, height;
+                let petals = [];
+                let running = false;
+                const colors = ['#d9a6a0', '#e3b8b0', '#c98f8a', '#dcc192'];
+
+                function resize() { width = canvas.width = window.innerWidth;
+                    height = canvas.height = window.innerHeight; }
+
+                class Petal {
+                    constructor() { this.reset(); }
+                    reset() {
+                        this.x = Math.random() * width;
+                        this.y = -20 - Math.random() * 100;
+                        this.size = 6 + Math.random() * 6;
+                        this.color = colors[Math.floor(Math.random() * colors.length)];
+                        this.vy = 0.5 + Math.random() * 0.7;
+                        this.vx = (Math.random() - 0.5) * 0.6;
+                        this.rotation = Math.random() * 360;
+                        this.rotationSpeed = (Math.random() - 0.5) * 1.4;
+                        this.sway = Math.random() * Math.PI * 2;
+                        this.life = 1;
+                    }
+                    update() {
+                        this.sway += 0.02;
+                        this.x += this.vx + Math.sin(this.sway) * 0.4;
+                        this.y += this.vy;
+                        this.rotation += this.rotationSpeed;
+                        if (this.y > height + 20) this.life = 0;
+                    }
+                    draw() {
+                        ctx.save();
+                        ctx.translate(this.x, this.y);
+                        ctx.rotate((this.rotation * Math.PI) / 180);
+                        ctx.fillStyle = this.color;
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, this.size * 0.55, this.size, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                }
+
+                function drift(count = 22) {
+                    for (let i = 0; i < count; i++) petals.push(new Petal());
+                    if (!running) { running = true;
+                        animate(); }
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, width, height);
+                    petals = petals.filter((p) => p.life > 0);
+                    for (const p of petals) { p.update();
+                        p.draw(); }
+                    if (petals.length < 14 && Math.random() < 0.02) petals.push(new Petal());
+                    requestAnimationFrame(animate);
+                }
+
+                resize();
+                window.addEventListener('resize', resize);
+                return drift;
+            }
+
+            // ===== Password =====
+            function openPasswordDialog() {
+                dom.passwordOverlay.setAttribute('data-active', 'true');
+                dom.passwordInput.value = '';
+                dom.passwordError.textContent = '';
+                dom.passwordError.removeAttribute('data-shake');
+                setTimeout(() => dom.passwordInput.focus(), 250);
+            }
+
+            function closePasswordDialog() {
+                dom.passwordOverlay.setAttribute('data-active', 'false');
+                dom.passwordError.textContent = '';
+                dom.passwordError.removeAttribute('data-shake');
+                dom.passwordInput.value = '';
+                dom.sealButton.setAttribute('data-cracked', 'false');
+            }
+
+            function handleUnlockSuccess(driftPetals) {
+                dom.passwordOverlay.setAttribute('data-active', 'false');
+                dom.sealButton.setAttribute('data-cracked', 'true');
+
+                setTimeout(() => {
+                    dom.landing.setAttribute('data-hidden', 'true');
+                    dom.wishPage.setAttribute('data-visible', 'true');
+                    driftPetals(26);
+                    typeMessage();
+                }, 650);
+            }
+
+            function handleUnlockFailure() {
+                dom.passwordError.textContent = 'That is not quite the word';
+                dom.passwordError.setAttribute('data-shake', 'true');
+                setTimeout(() => dom.passwordError.removeAttribute('data-shake'), 450);
+                dom.passwordInput.value = '';
+                dom.passwordInput.focus();
+            }
+
+            function checkPassword(driftPetals) {
+                const entered = dom.passwordInput.value.trim();
+                if (entered === CONFIG.password) handleUnlockSuccess(driftPetals);
+                else handleUnlockFailure();
+            }
+
+            function typeMessage() {
+                if (state.messageTyped) return;
+                state.messageTyped = true;
+
+                const dropCap = document.createElement('span');
+                dropCap.className = 'drop-cap';
+                dropCap.textContent = CONFIG.birthdayMessage.charAt(0);
+                dom.typedMessageEl.appendChild(dropCap);
+
+                const text = CONFIG.birthdayMessage.slice(1);
+                let index = 0;
+                dom.typeCursor.setAttribute('data-hidden', 'false');
+
+                function typeNext() {
+                    if (index < text.length) {
+                        dom.typedMessageEl.appendChild(document.createTextNode(text.charAt(index)));
+                        index += 1;
+                        const delay = text.charAt(index - 1) === ' ' ? 25 : 35 + Math.random() * 30;
+                        setTimeout(typeNext, delay);
+                    } else {
+                        dom.typeCursor.setAttribute('data-hidden', 'true');
+                    }
+                }
+                setTimeout(typeNext, 400);
+            }
+
+            // ===== Photo modal =====
+            function openPhotoModal() {
+                dom.modalPhotoImg.src = dom.birthdayPhoto.src;
+                dom.modalPhotoImg.alt = dom.birthdayPhoto.alt;
+                dom.photoModal.setAttribute('data-active', 'true');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closePhotoModal() {
+                dom.photoModal.setAttribute('data-active', 'false');
+                document.body.style.overflow = '';
+            }
+
+            // ===== Image handling =====
+            function handleImageSelect(file) {
+                if (!file) {
+                    resetImage();
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    state.imageData = e.target.result;
+                    state.imageFile = file;
+                    dom.imagePreview.src = state.imageData;
+                    dom.imagePreview.setAttribute('data-visible', 'true');
+                    dom.removeImageBtn.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function resetImage() {
+                state.imageData = null;
+                state.imageFile = null;
+                dom.imagePreview.src = '';
+                dom.imagePreview.setAttribute('data-visible', 'false');
+                dom.removeImageBtn.style.display = 'none';
+                dom.imageInput.value = '';
+            }
+
+            // ===== Send logic =====
+            function getSendData() {
+                const name = dom.sendName.value.trim();
+                const message = dom.sendMessage.value.trim();
+                return { name, message };
+            }
+
+            function validateSend() {
+                const { name, message } = getSendData();
+                if (!name || !message) {
+                    dom.sendFeedback.textContent = 'Please enter your name and a message.';
+                    dom.sendFeedback.className = 'send-feedback error';
+                    return false;
+                }
+                return true;
+            }
+
+            function setFeedback(text, isError = false) {
+                dom.sendFeedback.textContent = text;
+                dom.sendFeedback.className = 'send-feedback' + (isError ? ' error' : '');
+            }
+
+            // ===== Send via Email using EmailJS =====
+            function handleSendEmail() {
+                if (!validateSend()) return;
+                const { name, message } = getSendData();
+
+                // Check if EmailJS is configured
+                const isConfigured = CONFIG.emailjs.publicKey && CONFIG.emailjs.publicKey !== 'YOUR_EMAILJS_PUBLIC_KEY';
+                if (!isConfigured) {
+                    // Fallback: use mailto with image as base64 in body
+                    const recipient = CONFIG.contact.email || 'mdjishancse@gmail.com';
+                    const subject = encodeURIComponent(`Message from ${name} (Birthday page)`);
+                    let bodyText = `Name: ${name}\n\nMessage:\n${message}`;
+                    if (state.imageData) {
+                        bodyText += `\n\n[Image attached as data URI: ${state.imageData.substring(0, 80)}...]`;
+                    }
+                    bodyText += '\n\n— Sent from the birthday letter page';
+                    const body = encodeURIComponent(bodyText);
+                    const mailtoLink = `mailto:${recipient}?subject=${subject}&body=${body}`;
+                    window.location.href = mailtoLink;
+                    setFeedback('✉️ Email client opened. Please review and send (image data is included as text).');
+                    dom.sendForm.reset();
+                    resetImage();
+                    return;
+                }
+
+                // Use EmailJS
+                const templateParams = {
+                    from_name: name,
+                    message: message,
+                    // attachment is handled via the file input directly in EmailJS template
+                    // We need to send the file as an attachment
+                };
+
+                const fileInput = dom.imageInput;
+                const file = fileInput.files[0];
+
+                const emailParams = {
+                    from_name: name,
+                    message: message,
+                    // EmailJS attachment: use the file object
+                    attachment: file, // This works with EmailJS if the template has an attachment field
+                };
+
+                // Send using EmailJS with file attachment
+                emailjs.send(CONFIG.emailjs.serviceID, CONFIG.emailjs.templateID, emailParams)
+                    .then(() => {
+                        setFeedback('✅ Email sent successfully! Thank you.');
+                        dom.sendForm.reset();
+                        resetImage();
+                    })
+                    .catch((err) => {
+                        console.error('EmailJS error:', err);
+                        setFeedback('❌ Failed to send email. Please try again or use WhatsApp.', true);
+                    });
+            }
+
+            // ===== Send via WhatsApp (text only, with image note) =====
+            function handleSendWhatsApp() {
+                if (!validateSend()) return;
+                const { name, message } = getSendData();
+                const phone = CONFIG.contact.whatsapp || '919304940805';
+
+                let waMsg = `Name: ${name}\n\nMessage:\n${message}`;
+                if (state.imageData) {
+                    waMsg += `\n\n[Image is included in the email version. Please ask them to send it separately if needed.]`;
+                }
+                waMsg += '\n\n— Sent from the birthday letter page';
+
+                const waLink = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(waMsg)}`;
+                window.location.href = waLink;
+
+                setFeedback('💬 WhatsApp opened. Please review and send the text message.');
+                dom.sendForm.reset();
+                resetImage();
+            }
+
+            function clearSendForm() {
+                dom.sendForm.reset();
+                resetImage();
+                dom.sendFeedback.textContent = '';
+                dom.sendFeedback.className = 'send-feedback';
+            }
+
+            // ===== BIND EVENTS =====
+            function bindEvents(driftPetals) {
+                dom.sealButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    openPasswordDialog();
+                });
+                dom.unlockBtn.addEventListener('click', () => checkPassword(driftPetals));
+                dom.passwordInput.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') checkPassword(driftPetals);
+                });
+                dom.cancelBtn.addEventListener('click', closePasswordDialog);
+                dom.passwordOverlay.addEventListener('click', (event) => {
+                    if (event.target === dom.passwordOverlay) closePasswordDialog();
+                });
+
+                dom.photoWrapper.addEventListener('click', openPhotoModal);
+                dom.photoModalClose.addEventListener('click', closePhotoModal);
+                dom.photoModal.addEventListener('click', (event) => {
+                    if (event.target === dom.photoModal) closePhotoModal();
+                });
+
+                // Image upload
+                dom.imageInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) handleImageSelect(file);
+                    else resetImage();
+                });
+                dom.removeImageBtn.addEventListener('click', resetImage);
+
+                // Send
+                dom.sendEmailBtn.addEventListener('click', handleSendEmail);
+                dom.sendWaBtn.addEventListener('click', handleSendWhatsApp);
+                dom.sendClearBtn.addEventListener('click', clearSendForm);
+
+                // Shift+Enter in textarea triggers email
+                dom.sendMessage.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.shiftKey) {
+                        e.preventDefault();
+                        handleSendEmail();
+                    }
+                });
+
+                document.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Escape') return;
+                    if (dom.passwordOverlay.getAttribute('data-active') === 'true') closePasswordDialog();
+                    if (dom.photoModal.getAttribute('data-active') === 'true') closePhotoModal();
+                });
+
+                dom.sealButton.addEventListener('contextmenu', (event) => event.preventDefault());
+            }
+
+            // ===== INIT =====
+            function init() {
+                renderStaticContent();
+                renderContactCards();
+                renderSocialIcons();
+                initEmbers();
+                const driftPetals = initPetals();
+
+                // Init EmailJS if configured
+                if (CONFIG.emailjs.publicKey && CONFIG.emailjs.publicKey !== 'YOUR_EMAILJS_PUBLIC_KEY') {
+                    emailjs.init(CONFIG.emailjs.publicKey);
+                }
+
+                bindEvents(driftPetals);
+            }
+
+            document.addEventListener('DOMContentLoaded', init);
+        })();
+    </script>
+</body>
+</html>
